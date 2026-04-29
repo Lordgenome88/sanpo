@@ -215,6 +215,18 @@ function reroll() {
   const outP = document.getElementById('out-purpose');
   outP.textContent = pData.type === 'verb' ? item : `${item}を${purpose}`;
 }
+
+document.addEventListener('touchstart', function(e) {
+    if (e.touches.length > 1) e.preventDefault();
+}, { passive: false });
+
+let lastTap = 0;
+document.addEventListener('touchend', function(e) {
+  const now = Date.now();
+  if (now - lastTap < 300) e.preventDefault();
+    lastTap = now;
+}, { passive: false });
+
 buildRadio('area-chips',['東京','神奈川','千葉','埼玉'],'area',0);
 buildRadio('purpose-chips',purposeKeys,'purpose',0);
 </script>
