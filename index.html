@@ -113,12 +113,11 @@ const PURPOSES={
     '駅前広場で10分立つ','池や川に石を投げる','知らない道を選び続ける',
     '100円ショップで直感買いする','公園で昼寝する','駅のスタンプを押す',
     '地元のお祭りを探す','橋の上で立ち止まって川を眺める','坂を下りて海か川を目指す',
-    '近所の公園を全部まわる','バスに乗って終点まで行く','図書館に寄って気になる本を開く',
+    '近所の公園を全部まわる','バスに乗って終点まで行く',
     '路上の植物に名前をつける','飲食店のメニューを眺めて次回の候補を決める',
     '気になる建物の前で5秒眺める','商店街のはずれまで歩く',
     '知らないバス停の名前を覚えて帰る','電車に乗って隣駅で降りる','空を見上げて1分過ごす',
-    '石を一個拾って持ち帰る','地面の模様を観察する','新しい帰り道を試す',
-    '公園のベンチで缶コーヒーを飲む',
+    '石を一個拾って持ち帰る','地面の模様を観察する','公園のベンチで缶コーヒーを飲む',
   ]},
   食べる:{type:'suffix',items:[
     'たまごサンド','肉まん','焼きとうもろこし','たい焼き','コロッケ','おでん',
@@ -163,14 +162,23 @@ const PURPOSES={
     '江戸時代からある地名の痕跡','営業してるか怪しい店','廃線跡','坂道の名前プレート','古い石碑',
     '鎖でつながれていない自転車','花が飾られた玄関','自家製看板の駐車場','手作りの道案内','裏路地の祠',
     'ネコの通り道','公園にいるカラス以外の鳥','地面に描かれたアート','段差のある古い歩道','井戸の跡',
-    '誰かが置いていった石','消えそうな商店街のシャッター絵','地元の氏神様','橋の欄干の模様','古い水道管の蓋',
+    '誰かが置いていった石','消えそうな商店街のシャッター絵',
     '木が建物を突き破っている場所','謎の空き地','地元限定の自動販売機','廃タイヤを使った花壇','蔦が絡まった建物',
-    '町内会の掲示板','私設の小さな神棚','子どもの落書き','石垣の上の家','路地に面した小窓',
-    '旧街道の名残','用水路の源流','昔の地図と現在の差','大正・昭和建築',
+    '町内会の掲示板','子どもの落書き','石垣の上の家','路地に面した小窓',
+    '用水路の源流','昔の地図と現在の差','大正・昭和建築',
+  ]},
+  寄る:{type:'ni',items:[
+    '神社','お寺','図書館','銭湯','公民館','児童館','博物館','美術館','水族館','植物園',
+    '動物園','公園の管理事務所','地元の郷土資料館','古い映画館','老舗の喫茶店','地元の酒屋',
+    '個人経営の本屋','アンティークショップ','手芸店','釣具屋','金物屋','八百屋','豆腐屋',
+    '和菓子屋','老舗の蕎麦屋','地元のパン屋','花屋','陶芸教室','ギャラリー','銭湯の番台',
+    '農産物直売所','朝市','フリーマーケット','縁日','港の市場','漁協の直売所','道の駅',
+    '無人販売所','地元の氏神様','古い石碑のある場所','水飲み場','展望台','橋の上','堤防',
+    '川の源流','池のほとり','海岸','砂浜','岬','灯台',
   ]},
 };
 
-const purposeKeys=['撮る','やる','食べる','買う','描く','探す'];
+const purposeKeys=['撮る','やる','食べる','買う','描く','探す','寄る'];
 
 function buildRadio(containerId,items,name,defaultIdx){
   const c=document.getElementById(containerId);
@@ -201,7 +209,18 @@ function generate(){
   const item=pick(pData.items);
   outS.textContent=trio.join(' › ');
   outL.textContent=`${area} ｜ ${lineName}`;
-  outP.textContent=pData.type==='verb'?item:`${item}を${purpose}`;
+  // outP.textContent=pData.type === 'verb' ? item : `${item}を${purpose}`;
+  // outP.textContent=pData.type === 'ni'   ? item : `${item}に${purpose}`;
+  switch(pData.type){
+    case 'verb':
+      outP.textContent = item;
+      break;
+    case 'ni':
+      outP.textContent = `${item}に${purpose}`;
+      break;
+    default:
+      outP.textContent = `${item}を${purpose}`;
+  }
   result.style.display='block';
   result.classList.remove('show');
   void result.offsetWidth;
@@ -214,6 +233,7 @@ function reroll() {
   const item = pick(pData.items);
   const outP = document.getElementById('out-purpose');
   outP.textContent = pData.type === 'verb' ? item : `${item}を${purpose}`;
+  outP.textContent = pData.type === 'ni'   ? item : `${item}に${purpose}`;
 }
 
 document.addEventListener('touchstart', function(e) {
