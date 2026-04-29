@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>散歩しよ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Zen Maru Gothic',sans-serif;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px 48px;background:#d8f0f5;}
+.app{width:100%;max-width:400px;}
+.bg-deco{background:linear-gradient(135deg,#dff0f7 0%,#e4f5e2 55%,#cceaf5 100%);border-radius:24px;padding:24px 18px 28px;}
+h1{font-size:26px;font-weight:700;color:#1a5c4a;text-align:center;margin-bottom:4px;letter-spacing:0.06em;}
+.subtitle{font-size:12px;color:#4a8a76;text-align:center;margin-bottom:20px;letter-spacing:0.07em;}
+.section{background:rgba(255,255,255,0.72);border:1px solid rgba(100,200,160,0.35);border-radius:16px;padding:14px 16px;margin-bottom:12px;}
+.section-label{font-size:11px;font-weight:700;letter-spacing:0.12em;color:#4a8a76;margin-bottom:10px;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip-label{display:flex;align-items:center;cursor:pointer;user-select:none;}
+.chip-label input{display:none;}
+.chip{padding:7px 16px;border-radius:99px;border:1.5px solid rgba(100,180,150,0.4);font-size:13px;font-family:'Zen Maru Gothic',sans-serif;color:#3d7a68;background:rgba(255,255,255,0.6);transition:all 0.16s;font-weight:400;}
+.chip-label input:checked + .chip{background:linear-gradient(120deg,#4db8d4,#52c19a);border-color:transparent;color:#fff;font-weight:700;box-shadow:0 2px 8px rgba(78,184,180,0.28);}
+.btn{width:100%;padding:15px;border-radius:99px;border:none;background:linear-gradient(120deg,#3ab5cf,#3db891);color:#fff;font-family:'Zen Maru Gothic',sans-serif;font-size:18px;font-weight:700;letter-spacing:0.1em;cursor:pointer;transition:all 0.18s;margin-top:4px;box-shadow:0 3px 14px rgba(60,180,160,0.32);}
+.btn:hover{filter:brightness(1.06);}
+.btn:active{transform:scale(0.97);}
+.result{background:rgba(255,255,255,0.8);border:1px solid rgba(100,200,160,0.3);border-radius:16px;padding:20px 18px;margin-top:12px;display:none;}
+.result.show{display:block;animation:fadeUp 0.3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.result-tag{font-size:10px;letter-spacing:0.14em;font-weight:700;color:#4a8a76;margin-bottom:5px;}
+.result-station{font-size:21px;font-weight:700;color:#1a5c4a;line-height:1.5;}
+.station-line{font-size:11px;color:#6aaa90;margin-top:4px;letter-spacing:0.05em;}
+.divider{height:1px;background:rgba(100,200,160,0.25);margin:14px 0;}
+.result-purpose{font-size:21px;font-weight:700;color:#1e7fa8;line-height:1.5;}
+.err{font-size:13px;color:#c0504d;text-align:center;padding:4px 0;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="bg-deco">
+    <h1>散歩しよ</h1>
+    <p class="subtitle">どこへ行くか、何をするか。ランダムに決めよう。</p>
+    <div class="section">
+      <div class="section-label">エリア</div>
+      <div class="chips" id="area-chips"></div>
+    </div>
+    <div class="section">
+      <div class="section-label">目的</div>
+      <div class="chips" id="purpose-chips"></div>
+    </div>
+    <button class="btn" onclick="generate()">でかける ›</button>
+    <div class="result" id="result">
+      <div class="result-tag">今日の駅</div>
+      <div class="result-station" id="out-stations"></div>
+      <div class="station-line" id="out-line"></div>
+      <div class="divider"></div>
+      <div class="result-tag">やること</div>
+      <div class="result-purpose" id="out-purpose"></div>
+    </div>
+  </div>
+</div>
+<script>
+const AREAS={
+  東京:{lines:{
+    山手線:['品川','大崎','五反田','目黒','恵比寿','渋谷','原宿','代々木','新宿','新大久保','高田馬場','目白','池袋','大塚','巣鴨','駒込','田端','西日暮里','日暮里','鶯谷','上野','御徒町','秋葉原','神田','東京','有楽町','新橋','浜松町','田町','高輪ゲートウェイ'],
+    中央線:['東京','神田','御茶ノ水','四ツ谷','新宿','中野','高円寺','阿佐ヶ谷','荻窪','西荻窪','吉祥寺','三鷹','武蔵境','東小金井','武蔵小金井','国分寺','西国分寺','国立','立川','日野','豊田','八王子'],
+    東急東横線:['渋谷','中目黒','祐天寺','学芸大学','都立大学','自由が丘','田園調布','多摩川','新丸子','武蔵小杉','元住吉','日吉','綱島','大倉山','菊名','妙蓮寺','白楽','東白楽','反町','横浜'],
+    京王線:['新宿','笹塚','代田橋','明大前','下高井戸','桜上水','上北沢','八幡山','芦花公園','千歳烏山','仙川','つつじヶ丘','柴崎','国領','布田','調布','西調布','飛田給','武蔵野台','多磨霊園','東府中','府中'],
+    小田急線:['新宿','南新宿','参宮橋','代々木八幡','代々木上原','東北沢','下北沢','世田谷代田','梅ヶ丘','豪徳寺','経堂','千歳船橋','祖師ヶ谷大蔵','成城学園前','喜多見','狛江','和泉多摩川','登戸','向ヶ丘遊園','生田'],
+  }},
+  神奈川:{lines:{
+    横浜線:['東神奈川','大口','菊名','新横浜','小机','鴨居','中山','十日市場','長津田','成瀬','町田','古淵','矢部','相模原','橋本'],
+    京急本線:['品川','北品川','新馬場','青物横丁','鮫洲','立会川','大森海岸','平和島','大森町','梅屋敷','京急蒲田','雑色','六郷土手','京急川崎','八丁畷','鶴見市場','京急鶴見','花月総持寺','生麦','京急新子安','子安','神奈川新町','仲木戸','神奈川','横浜','戸部','日ノ出町','黄金町','南太田','井土ヶ谷','弘明寺','上大岡','屏風浦','杉田','新杉田','南部市場','金沢八景','追浜','京急田浦','安針塚','逸見','汐入','横須賀中央','県立大学','堀ノ内','新大津','北久里浜','京急久里浜'],
+    相鉄本線:['横浜','平沼橋','西横浜','天王町','星川','和田町','上星川','西谷','鶴ヶ峰','二俣川','希望ヶ丘','三ツ境','瀬谷','大和','相模大塚','さがみ野','かしわ台','海老名'],
+    小田急江ノ島線:['相模大野','東林間','中央林間','南林間','鶴間','大和','桜ヶ丘','高座渋谷','長後','湘南台','善行','藤沢本町','藤沢','本鵠沼','鵠沼海岸','片瀬江ノ島'],
+    湘南新宿ライン:['大崎','武蔵小杉','横浜','保土ヶ谷','東戸塚','戸塚','大船','藤沢','辻堂','茅ヶ崎','平塚','大磯','二宮','国府津','鴨宮','小田原'],
+  }},
+  千葉:{lines:{
+    総武線:['千葉','稲毛','津田沼','船橋','下総中山','新小岩','平井','亀戸','錦糸町','両国','浅草橋','秋葉原','御茶ノ水'],
+    京成本線:['京成上野','日暮里','新三河島','町屋','千住大橋','京成関屋','堀切菖蒲園','お花茶屋','青砥','京成高砂','京成小岩','江戸川','国府台','市川真間','菅野','京成八幡','鬼越','京成中山','東中山','京成西船','海神','京成船橋','大神宮下','船橋競馬場','谷津','京成津田沼'],
+    内房線:['千葉','蘇我','浜野','八幡宿','五井','姉ヶ崎','長浦','袖ヶ浦','巌根','木更津','君津','青堀','大貫','佐貫町','上総湊','竹岡','浜金谷','保田','安房勝山'],
+    外房線:['千葉','本千葉','市川大野','誉田','土気','大網','茂原','八積','上総一ノ宮','東浪見','太東','長者町','三門','大原'],
+    東葉高速線:['西船橋','東海神','飯山満','北習志野','船橋日大前','東葉勝田台'],
+  }},
+  埼玉:{lines:{
+    埼京線:['大宮','北与野','与野本町','南与野','中浦和','武蔵浦和','西浦和','浮間舟渡','北赤羽','赤羽','十条','板橋','池袋'],
+    東武東上線:['池袋','北池袋','下板橋','大山','中板橋','ときわ台','上板橋','東武練馬','下赤塚','成増','和光市','朝霞','朝霞台','志木','柳瀬川','みずほ台','鶴瀬','ふじみ野','上福岡','新河岸','川越'],
+    西武池袋線:['池袋','椎名町','東長崎','江古田','桜台','練馬','中村橋','富士見台','石神井公園','大泉学園','保谷','ひばりヶ丘','東久留米','清瀬','秋津','所沢','西所沢','小手指','狭山ヶ丘','武蔵藤沢','稲荷山公園','入間市','仏子','元加治','飯能'],
+    高崎線:['大宮','宮原','上尾','桶川','北本','鴻巣','吹上','行田','熊谷','籠原','深谷','岡部','本庄','神保原','新町','倉賀野','高崎'],
+    京浜東北線:['大宮','さいたま新都心','与野','北浦和','浦和','南浦和','蕨','西川口','川口'],
+  }},
+};
+
+const PURPOSES={
+  撮る:{type:'suffix',items:[
+    '古い看板','猫','路地裏','光と影','自動販売機','雑草','水たまりの反射','電線','夕暮れ',
+    '誰かが捨てた傘','錆びたシャッター','街の植木','駅の改札','滑り台','ベンチ',
+    '信号待ちの人々','飲食店のメニュー','橋の上からの景色','廃屋','コンビニの駐車場',
+    '公園の鳩','草の葉','マンホール','消えかけた道路標示','軒先の植木鉢',
+    '朝の商店街','夜の自動販売機','踏切','川の流れ','雨上がりの地面',
+    '子どもの落書き','古い電話ボックス','駐輪場の自転車','工事現場のフェンス','ネコの足跡',
+    '誰も使っていないベンチ','空き地','郵便受け','苔むした石段','縁日の屋台',
+    '鉄骨と青空','バス停','団地の窓','公衆トイレのドア','線路沿いの家',
+    '夕暮れの影','公園の水飲み場','引き戸のある家','枯れた花壇','街灯',
+  ]},
+  やる:{type:'verb',items:[
+    'ベンチに座って15分ぼーっとする','コンビニでくじを引く','公園で逆上がりに挑戦する',
+    '地図を見ずに気の向くまま歩く','知らないカフェに入る','初めての駅で降りる',
+    '川沿いをひたすら歩く','商店街を端から端まで歩く','神社やお寺に寄る','坂道を登り切る',
+    '自動販売機のランダムボタンを押す','公共の本棚から一冊読む','地元の人に話しかける',
+    '遊具で遊ぶ','高い場所から街を眺める','路地裏を全部制覇する','アーケードを歩ききる',
+    '駅前広場で10分立つ','池や川に石を投げる','知らない道を選び続ける',
+    '100円ショップで直感買いする','公園で昼寝する','駅のスタンプを押す',
+    '地元のお祭りを探す','橋の上で立ち止まって川を眺める','坂を下りて海か川を目指す',
+    '近所の公園を全部まわる','バスに乗って終点まで行く','図書館に寄って気になる本を開く',
+    '路上の植物に名前をつける','飲食店のメニューを眺めて次回の候補を決める',
+    '気になる建物の前で5秒眺める','商店街のはずれまで歩く',
+    '知らないバス停の名前を覚えて帰る','電車に乗って隣駅で降りる','空を見上げて1分過ごす',
+    '石を一個拾って持ち帰る','地面の模様を観察する','新しい帰り道を試す',
+    '公園のベンチで缶コーヒーを飲む',
+  ]},
+  食べる:{type:'suffix',items:[
+    'たまごサンド','肉まん','焼きとうもろこし','たい焼き','コロッケ','おでん',
+    'ソフトクリーム','パン屋のクロワッサン','蕎麦','立ち飲みの串カツ',
+    '自動販売機の缶コーヒー','コンビニのホットスナック','商店街の惣菜','老舗のラーメン',
+    '公園のアイス','焼き鳥','豆大福','クレープ','地元のケーキ屋のプリン','屋台のわたあめ',
+    '立ち食いそば','おにぎり','いなり寿司','チョコバナナ','みたらし団子',
+    '揚げまんじゅう','どら焼き','あんパン','ちくわ','カレーパン',
+    '豚汁','甘酒','焼き芋','わらび餅','草餅',
+    '駄菓子屋のラムネ','ところてん','かき氷','メロンパン','ジャンボフランク',
+    '肉巻きおにぎり','タピオカ','もんじゃ焼き','よもぎ餅','揚げたてのドーナツ',
+    '冷やし中華','いちご飴','揚げたこ焼き','チーズハットグ','すあま',
+  ]},
+  買う:{type:'suffix',items:[
+    '駄菓子','古本','100均の謎グッズ','手ぬぐい','地元の野菜','一輪の花',
+    '昔ながらの文房具','豆腐屋の豆腐','商店街の漬物','古道具屋の箸置き',
+    'レトロなポストカード','神社のお守り','縁日のくじ','青果店の旬の果物','蚤の市の皿',
+    '地元の酒屋の地酒','手作りアクセサリー','古着屋のハンカチ','商店街の和菓子',
+    '八百屋の珍しい野菜','パン屋の一番人気','地元の醤油','骨董屋の小物','駄菓子屋のガム',
+    '本屋の文庫本一冊','花屋の切り花','農産物直売所の野菜','コーヒー豆','地元の味噌',
+    '手芸店のボタン','フリマの掘り出し物','土産屋の絵葉書','焼き物の豆皿','地元のジャム',
+    'アンティークの鍵','古地図','リサイクルショップのレコード','路地の雑貨屋の布','お香',
+    '個人書店のZINE','地元の蜂蜜','わら細工','手描きのシール','まちの薬屋の置き薬',
+    '商店街の乾物','地酒の小瓶','古いバッジ','駄菓子屋のビー玉','地元の陶芸家の湯呑み',
+  ]},
+  描く:{type:'suffix',items:[
+    '古い商店街の看板','踏切と電車','路地の奥','川沿いの景色','神社の鳥居',
+    '公園のベンチと木漏れ日','古い民家の屋根','団地の外壁','線路沿いの家々','橋の欄干',
+    '自動販売機と路地','夕暮れのビル','花屋の店先','駅の改札口','電柱と電線',
+    '坂道の先の空','古書店の外観','公園の水飲み場','バス停と空','石畳の路地',
+    '川の水面','錆びた看板','商店街のアーケード','神社の石段','枯れ木と青空',
+    '港の係留ボート','路上の植木鉢','寺の山門','廃屋の窓','工場の煙突',
+    '市場の野菜','砂利道の奥','鉄橋と川','公衆電話ボックス','夜の街灯',
+    '公園の鉄棒','朝の漁港','路面電車の停留所','古いアパートの外階段','雨の歩道',
+    '海岸の防波堤','駅前ロータリー','並木道','雑居ビルの窓','田んぼと農道',
+    '商店街の人混み','灯台と海','川べりの柳','空き地の草むら','夜のコンビニ',
+  ]},
+  探す:{type:'suffix',items:[
+    '猫が3匹以上いる場所','昭和のままの看板','廃業した店の跡','営業中の銭湯','手書きメニューの店',
+    '地元に一軒しかない個人店','消えかけた道路の白線','苔が生えた石','古い郵便ポスト','年季の入った電柱広告',
+    '木製の窓枠がある家','手書きの貼り紙','地元の人しか使わなそうな近道','犬の散歩ルート','水路の暗渠',
+    '江戸時代からある地名の痕跡','営業してるか怪しい店','廃線跡','坂道の名前プレート','古い石碑',
+    '鎖でつながれていない自転車','花が飾られた玄関','自家製看板の駐車場','手作りの道案内','裏路地の祠',
+    'ネコの通り道','公園にいるカラス以外の鳥','地面に描かれたアート','段差のある古い歩道','井戸の跡',
+    '誰かが置いていった石','消えそうな商店街のシャッター絵','地元の氏神様','橋の欄干の模様','古い水道管の蓋',
+    '木が建物を突き破っている場所','謎の空き地','地元限定の自動販売機','廃タイヤを使った花壇','蔦が絡まった建物',
+    '町内会の掲示板','私設の小さな神棚','子どもの落書き','石垣の上の家','路地に面した小窓',
+    '丁目の境界線','旧街道の名残','用水路の源流','昔の地図と現在の差','大正・昭和建築',
+  ]},
+};
+
+const purposeKeys=['撮る','やる','食べる','買う','描く','探す'];
+
+function buildRadio(containerId,items,name,defaultIdx){
+  const c=document.getElementById(containerId);
+  items.forEach((v,i)=>{
+    c.innerHTML+=`<label class="chip-label"><input type="radio" name="${name}" value="${v}"${i===defaultIdx?' checked':''}><span class="chip">${v}</span></label>`;
+  });
+}
+function getVal(name){const el=document.querySelector(`input[name="${name}"]:checked`);return el?el.value:null;}
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function generate(){
+  const area=getVal('area');
+  const purpose=getVal('purpose');
+  const result=document.getElementById('result');
+  const outS=document.getElementById('out-stations');
+  const outL=document.getElementById('out-line');
+  const outP=document.getElementById('out-purpose');
+  if(!area||!purpose){
+    result.style.display='block';
+    outS.innerHTML='<span class="err">エリアと目的を選んでね。</span>';
+    outL.textContent='';outP.textContent='';return;
+  }
+  const lines=AREAS[area].lines;
+  const lineName=pick(Object.keys(lines));
+  const stations=lines[lineName];
+  const idx=Math.floor(Math.random()*(stations.length-2));
+  const trio=stations.slice(idx,idx+3);
+  const pData=PURPOSES[purpose];
+  const item=pick(pData.items);
+  outS.textContent=trio.join(' › ');
+  outL.textContent=`${area} ｜ ${lineName}`;
+  outP.textContent=pData.type==='verb'?item:`${item}を${purpose}`;
+  result.style.display='block';
+  result.classList.remove('show');
+  void result.offsetWidth;
+  result.classList.add('show');
+}
+buildRadio('area-chips',['東京','神奈川','千葉','埼玉'],'area',0);
+buildRadio('purpose-chips',purposeKeys,'purpose',0);
+</script>
+</body>
+</html>
