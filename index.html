@@ -232,8 +232,16 @@ function reroll() {
   const pData = PURPOSES[purpose];
   const item = pick(pData.items);
   const outP = document.getElementById('out-purpose');
-  outP.textContent = pData.type === 'verb' ? item : `${item}を${purpose}`;
-  outP.textContent = pData.type === 'ni'   ? item : `${item}に${purpose}`;
+  switch(pData.type){
+    case 'verb':
+      outP.textContent = item;
+      break;
+    case 'ni':
+      outP.textContent = `${item}に${purpose}`;
+      break;
+    default:
+      outP.textContent = `${item}を${purpose}`;
+  }
 }
 
 document.addEventListener('touchstart', function(e) {
